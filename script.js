@@ -26,6 +26,7 @@ onload = function(){
     const vertexBuffer = gl.createBuffer();
     
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    const indexBuffer = gl.createBuffer();
 
     const vAttribLocation = gl.getAttribLocation(prg, 'vertexPosition');
     gl.enableVertexAttribArray(vAttribLocation);
@@ -37,12 +38,13 @@ onload = function(){
         0.0,  1.0,  0.0, 1.0,
         0.5,  0.5,  0.0,
         0.0,  0.0,  1.0, 1.0,
-        -0.5, -0.5, 0.0,
-        0.0,  1.0,  0.0, 1.0,
         0.5,  -0.5, 0.0,
-        0.0,  0.0,  0.0, 1.0,
-        0.5,  0.5,  0.0,
-        0.0,  0.0,  1.0, 1.0
+        0.0,  0.0,  0.0, 1.0
+    ]);
+
+    const indices = new Uint16Array([
+        0, 1, 2,
+        1, 3, 2
     ]);
 
     const colorAttribLocation = gl.getAttribLocation(prg, 'color');
@@ -52,8 +54,11 @@ onload = function(){
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-    const VERTEX_NUMS = 6;
-    gl.drawArrays(gl.TRIANGLES, 0, VERTEX_NUMS);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+    
+    const indexSize = indices.length;
+    gl.drawElements(gl.TRIANGLES, indexSize, gl.UNSIGNED_SHORT, 0);
 
 
 };
