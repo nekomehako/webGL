@@ -1,0 +1,31 @@
+<html>
+    <head>
+        <title>WebGL TEST</title>
+        <script src="script.js" type="text/javascript"></script>
+
+        <script src="vertex.shader" id="vs" type="x-shader/x-vertex">#version 300 es
+            in vec3 vertexPosition;
+            in vec4 color;
+            
+            out vec4 vColor;
+            
+            void main() {
+              vColor = color;
+              gl_Position = vec4(vertexPosition, 1.0);
+            }</script>
+        
+        <script src="fragment.shader"id="fs" type="x-shader/x-fragment">#version 300 es
+            precision highp float;
+            
+            in vec4 vColor;
+            out vec4 fragmentColor;
+            
+            void main() {
+              fragmentColor = vColor;
+            }</script>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+
+    </body>
+</html>
