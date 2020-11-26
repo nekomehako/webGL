@@ -18,38 +18,39 @@ onload = function(){
     
     // vLocationの取得
     const VERTEX_SIZE = 3
-    const vLocationBuffer = gl.createBuffer();
-    const vLocation = gl.getAttribLocation(prg, 'vertexPosition');
-    gl.bindBuffer(gl.ARRAY_BUFFER, vLocationBuffer);
-    gl.enableVertexAttribArray(vLocation);
-    gl.vertexAttribPointer(vLocation, VERTEX_SIZE, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, vLocationBuffer);
-    const vertices = new Float32Array([
-        -0.5, 0.5,  0.0,
-        -0.5, -0.5, 0.0,
-        0.5,  0.5,  0.0,
-        -0.5, -0.5, 0.0,
-        0.5,  -0.5, 0.0,
-        0.5,  0.5,  0.0
-    ]);
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
     const COLOR_SIZE = 4
-    const colorBuffer = gl.createBuffer();
-    const color = gl.getAttribLocation(prg, 'color');
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    gl.enableVertexAttribArray(color);
-    gl.vertexAttribPointer(color, COLOR_SIZE, gl.FLOAT, false, 0, 0);
-    gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-    const colors = new Float32Array([
-        1.0, 0.0, 0.0, 1.0,
-        0.0, 1.0, 0.0, 1.0,
-        0.0, 0.0, 1.0, 1.0,
-        0.0, 1.0, 0.0, 1.0,
-        0.0, 0.0, 0.0, 1.0,
-        0.0, 0.0, 1.0, 1.0
+    const STRIDE = (VERTEX_SIZE + COLOR_SIZE) * Float32Array.BYTES_PER_ELEMENT;
+    const POSITION_OFFSET = 0;
+    const COLOR_OFFSET = VERTEX_SIZE * Float32Array.BYTES_PER_ELEMENT;
+
+    const vertexBuffer = gl.createBuffer();
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+
+    const vAttribLocation = gl.getAttribLocation(prg, 'vertexPosition');
+    gl.enableVertexAttribArray(vAttribLocation);
+    gl.vertexAttribPointer(vAttribLocation, VERTEX_SIZE, gl.FLOAT, false, STRIDE, POSITION_OFFSET);
+    const vertices = new Float32Array([
+        -0.5, 0.5,  0.0,      // xyz
+        1.0,  0.0,  0.0, 1.0, // rgba
+        -0.5, -0.5, 0.0,
+        0.0,  1.0,  0.0, 1.0,
+        0.5,  0.5,  0.0,
+        0.0,  0.0,  1.0, 1.0,
+        -0.5, -0.5, 0.0,
+        0.0,  1.0,  0.0, 1.0,
+        0.5,  -0.5, 0.0,
+        0.0,  0.0,  0.0, 1.0,
+        0.5,  0.5,  0.0,
+        0.0,  0.0,  1.0, 1.0
     ]);
-    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+
+    const colorAttribLocation = gl.getAttribLocation(prg, 'color');
+    gl.enableVertexAttribArray(colorAttribLocation);
+    gl.vertexAttribPointer(colorAttribLocation, COLOR_SIZE, gl.FLOAT, false, STRIDE, COLOR_OFFSET);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
     const VERTEX_NUMS = 6;
     gl.drawArrays(gl.TRIANGLES, 0, VERTEX_NUMS);
@@ -57,6 +58,16 @@ onload = function(){
 
 };
 
+function Float32Concat(first, second)
+{
+    var firstLength = first.length,
+        result = new Float32Array(firstLength + second.length);
+
+    result.set(first);
+    result.set(second, firstLength);
+
+    return result;
+}
 
 function create_shader(id){
     // シェーダを格納する変数
