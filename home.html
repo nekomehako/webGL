@@ -3,7 +3,7 @@
         <title>WebGL TEST</title>
         <script src="script.js" type="text/javascript"></script>
 
-        <script src="vertex.shader" id="vs" type="x-shader/x-vertex">#version 300 es
+        <script id="vs" type="x-shader/x-vertex">#version 300 es
             in vec3 vertexPosition;
             in vec4 color;
             
@@ -14,7 +14,7 @@
               gl_Position = vec4(vertexPosition, 1.0);
             }</script>
         
-        <script src="fragment.shader"id="fs" type="x-shader/x-fragment">#version 300 es
+        <script id="fs" type="x-shader/x-fragment">#version 300 es
             precision highp float;
             
             in vec4 vColor;

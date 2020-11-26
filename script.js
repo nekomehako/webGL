@@ -32,13 +32,13 @@ onload = function(){
     gl.enableVertexAttribArray(vAttribLocation);
     gl.vertexAttribPointer(vAttribLocation, VERTEX_SIZE, gl.FLOAT, false, STRIDE, POSITION_OFFSET);
     const vertices = new Float32Array([
-        -0.5, 0.5,  0.0,      // xyz
+        -1.0, 1.0,  0.0,      // xyz
         1.0,  0.0,  0.0, 1.0, // rgba
-        -0.5, -0.5, 0.0,
+        -1.0, -1.0, 0.0,
         0.0,  1.0,  0.0, 1.0,
-        0.5,  0.5,  0.0,
+        1.0,  1.0,  0.0,
         0.0,  0.0,  1.0, 1.0,
-        0.5,  -0.5, 0.0,
+        1.0,  -1.0, 0.0,
         0.0,  0.0,  0.0, 1.0
     ]);
 
@@ -62,17 +62,6 @@ onload = function(){
 
 
 };
-
-function Float32Concat(first, second)
-{
-    var firstLength = first.length,
-        result = new Float32Array(firstLength + second.length);
-
-    result.set(first);
-    result.set(second, firstLength);
-
-    return result;
-}
 
 function create_shader(id){
     // シェーダを格納する変数
