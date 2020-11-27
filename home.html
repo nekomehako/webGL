@@ -3,25 +3,28 @@
         <title>WebGL TEST</title>
         <script src="script.js" type="text/javascript"></script>
 
-        <script id="vs" type="x-shader/x-vertex">#version 300 es
+        <script id="vs" type="vertex-shader">#version 300 es
             in vec3 vertexPosition;
-            in vec4 color;
-            
-            out vec4 vColor;
-            
+            out vec2 v_uv;
             void main() {
-              vColor = color;
-              gl_Position = vec4(vertexPosition, 1.0);
+                v_uv = vertexPosition.xy;
+                gl_Position = vec4(vertexPosition, 1.);
             }</script>
         
-        <script id="fs" type="x-shader/x-fragment">#version 300 es
+        <script id="fs" type="fragment-shader">#version 300 es
             precision highp float;
-            
-            in vec4 vColor;
-            out vec4 fragmentColor;
-            
+            in vec2 v_uv;
+            layout (location = 0) out vec4 fragColor;
+            layout (location = 1) out vec2 o_velocity;
+            layout (location = 2) out float o_dencity;
+            uniform vec2 resolution;
+            uniform sampler2D u_velocity;
+            uniform sampler2D u_dencity;
+
             void main() {
-              fragmentColor = vColor;
+                vec2 uv = vec2(v_uv.x * resolution.x,v_uv.y * resolution.y)/min(resolution.x,resolution.y);
+                float gray = length(uv);
+                fragColor = vec4(vec3(gray), 1.);
             }</script>
     </head>
     <body>
