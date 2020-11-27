@@ -9,8 +9,8 @@
             void main() {
                 v_uv = vertexPosition.xy;
                 gl_Position = vec4(vertexPosition, 1.);
-            }</script>
-        
+            }
+        </script>
         <script id="fs" type="fragment-shader">#version 300 es
             precision highp float;
             in vec2 v_uv;
@@ -18,17 +18,32 @@
             layout (location = 1) out vec2 o_velocity;
             layout (location = 2) out float o_dencity;
             uniform vec2 resolution;
+            uniform vec2 mouse;
             uniform sampler2D u_velocity;
             uniform sampler2D u_dencity;
 
             void main() {
                 vec2 uv = vec2(v_uv.x * resolution.x,v_uv.y * resolution.y)/min(resolution.x,resolution.y);
+
                 float gray = length(uv);
-                fragColor = vec4(vec3(gray), 1.);
-            }</script>
+                fragColor = vec4(mouse,0., 1.);
+            }
+        </script>
+        <style type="text/css">
+            body{
+                margin : 0px ;
+                padding : 0px ;
+            }
+            body #wrapper{
+                width: 100%;
+                height: 100%;
+                position: fixed;
+            }
+        </style>
     </head>
     <body>
-        <canvas id="canvas"></canvas>
-
+        <div id="wrapper">
+            <canvas id="canvas"></canvas>
+        </div>
     </body>
 </html>

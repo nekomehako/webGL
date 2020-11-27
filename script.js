@@ -1,33 +1,39 @@
-onload = function(){
+//フルウィンドウにする
+const CANVAS_SIZE_X = window.innerWidth;
+const CANVAS_SIZE_Y = window.innerHeight;
+//マウス座標
+let mouseX = 0,mouseY = 0;
+let time = 0;
+let fps = 1000 /30
+
+window.onload = function(){
     // canvasエレメントを取得
     const c = document.getElementById('canvas');
-    const CANVAS_SIZE_X = 600.0;
-    const CANVAS_SIZE_Y = 300.0;
-
+    //キャンバスサイズを設定
     c.width = CANVAS_SIZE_X;
     c.height = CANVAS_SIZE_Y;
+    //マウスがキャンバス上を動いているときマウス座標の取得
+    c.addEventListener('mousemove', mouseMove, true);
 
-    // webglコンテキストを取得
+    // webgl2コンテキストを取得
     const gl = c.getContext('webgl2')
-    // canvasを黒でクリア(初期化)する
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
 
+    //シェーダーのコンパイル等
     const v_shader = create_shader(gl,"vs");
     const f_shader = create_shader(gl,"fs");
     
     // プログラムオブジェクトの生成とリンク
     const prg = create_program(gl,v_shader, f_shader);
-    
-    gl.uniform2f(gl.getUniformLocation(prg, 'resolution'), CANVAS_SIZE_X, CANVAS_SIZE_Y);
 
-    //texture
+    //テクスチャ
+    //フレームバッファの作成
     const framebuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer)
+    //速度を保存するテクスチャの作成
     const velocityTexture = createTexture(gl, CANVAS_SIZE_X, CANVAS_SIZE_Y, gl.RG32F, gl.RG, gl.FLOAT)
     gl.bindTexture(gl.TEXTURE_2D, velocityTexture);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, velocityTexture, 0);
-
+    //圧力を保存するテクスチャの作成
     const dencityTexture = createTexture(gl, CANVAS_SIZE_X, CANVAS_SIZE_Y, gl.R32F, gl.RED, gl.FLOAT)
     gl.bindTexture(gl.TEXTURE_2D, dencityTexture);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, dencityTexture, 0);
@@ -37,13 +43,7 @@ onload = function(){
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
 
-    const velocityLocation = gl.getUniformLocation(prg, 'u_velocity');
-    setUniformTexture(gl, velocityLocation, velocityTexture);
-
-    const dencityLocation = gl.getUniformLocation(prg, 'u_dencity');
-    setUniformTexture(gl, dencityLocation, dencityTexture);
-
-    // vLocationの取得
+    // 頂点情報の設定
     const VERTEX_SIZE = 3
 
     const vertexBuffer = gl.createBuffer();
@@ -60,25 +60,44 @@ onload = function(){
         1.0,  1.0,  0.0,
         1.0,  -1.0, 0.0,
     ]);
-
     const indices = new Uint16Array([
         0, 1, 2,
         1, 3, 2
     ]);
-
-
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
-    
-    const indexSize = indices.length;
-    gl.drawElements(gl.TRIANGLES, indexSize, gl.UNSIGNED_SHORT, 0);
 
-    gl.flush(); 
+    //レンダリング
+    (function(){
+        //色をリセット
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clearDepth(1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        //uniform sampler2D u_velocity 
+        setUniformTexture(gl, gl.getUniformLocation(prg, 'u_velocity'), velocityTexture);
+        //uniform sampler2D u_dencity
+        setUniformTexture(gl, gl.getUniformLocation(prg, 'u_dencity'), dencityTexture);
+        //uniform vec2 mouse
+        gl.uniform2f(gl.getUniformLocation(prg, 'mouse'), mouseX/CANVAS_SIZE_X, mouseY/CANVAS_SIZE_Y);
+        //uniform vec2 resolution
+        gl.uniform2f(gl.getUniformLocation(prg, 'resolution'), CANVAS_SIZE_X, CANVAS_SIZE_Y);
+        //頂点の描画
+        gl.drawElements(gl.TRIANGLES, indices.length , gl.UNSIGNED_SHORT, 0);
+        gl.flush();
+        //再帰する
+        setTimeout(arguments.callee, fps);
+    })();
 };
-
+//マウス座標取得関数
+function mouseMove(e){
+    const rect = e.target.getBoundingClientRect();
+    mouseX = e.offsetX-rect.left;
+    mouseY = e.offsetY-rect.top;
+}
+//シェーダーのコンパイル関数
 function create_shader(gl, id){
     // シェーダを格納する変数
     let shader;
@@ -88,12 +107,12 @@ function create_shader(gl, id){
     if(!scriptElement){return;}
     // scriptタグのtype属性をチェック
     switch(scriptElement.type){
-        // 頂点シェーダの場合
+        // 頂点シェーダだったら
         case 'vertex-shader':
             shader = gl.createShader(gl.VERTEX_SHADER);
             break;
             
-        // フラグメントシェーダの場合
+        // フラグメントシェーダだったら
         case 'fragment-shader':
             shader = gl.createShader(gl.FRAGMENT_SHADER);
             break;
@@ -103,14 +122,14 @@ function create_shader(gl, id){
     
     // 生成されたシェーダにソースを割り当てる
     gl.shaderSource(shader, scriptElement.text);
-    // シェーダをコンパイルする
+    // シェーダをコンパイル
     gl.compileShader(shader);
-    // シェーダが正しくコンパイルされたかチェック
+    // シェーダが正しくコンパイルできたか
     if(gl.getShaderParameter(shader, gl.COMPILE_STATUS)){ 
         // 成功していたらシェーダを返して終了
         return shader;
     }else{
-        // 失敗していたらエラーログをアラートする
+        // エラーログをアラートする
         alert(gl.getShaderInfoLog(shader));
     }
 }
@@ -140,7 +159,7 @@ function create_program(gl, vs, fs){
         alert(gl.getProgramInfoLog(program));
     }
 }
-
+//テクスチャの生成ヘルパー関数
 function createTexture(gl, sizeX, sizeY, internalFormat, format, type) {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -150,15 +169,9 @@ function createTexture(gl, sizeX, sizeY, internalFormat, format, type) {
     gl.bindTexture(gl.TEXTURE_2D, null);
     return texture;
 }
-
+//テクスチャをuniform変数に割り当てる
 function setUniformTexture(gl, index, texture, location) {
     gl.activeTexture(gl.TEXTURE0 + index);
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.uniform1i(location, index);
 }
-
-function setUniformTexture(gl, index, texture, location) {
-    gl.activeTexture(gl.TEXTURE0 + index);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.uniform1i(location, index);
-  }
