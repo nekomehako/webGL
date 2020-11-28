@@ -2,7 +2,7 @@
 const CANVAS_SIZE_X = window.innerWidth;
 const CANVAS_SIZE_Y = window.innerHeight;
 //マウス座標
-let mouseX = 0,mouseY = 0; mousePress = 0;
+let mouseX = 0,mouseY = 0; omouseX = 0, omouseY = 0, mousePress = 0;
 let time = 0;
 let fps = 1000 /30
 
@@ -84,6 +84,8 @@ window.onload = function(){
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         //uniform vec2 resolution;
         gl.uniform2f(gl.getUniformLocation(prg, 'resolution'), CANVAS_SIZE_X, CANVAS_SIZE_Y);
+        //uniform vec2 omouse;
+        gl.uniform2f(gl.getUniformLocation(prg, 'omouse'), omouseX/CANVAS_SIZE_X, omouseY/CANVAS_SIZE_Y);
         //uniform vec2 mouse;
         gl.uniform2f(gl.getUniformLocation(prg, 'mouse'), mouseX/CANVAS_SIZE_X, mouseY/CANVAS_SIZE_Y);
         //uniform vec2 mousePress;
@@ -103,6 +105,7 @@ window.onload = function(){
 };
 //マウス座標取得関数
 function mouseMove(e){
+    omouseX = mouseX; omouseY = mouseY;
     const rect = e.target.getBoundingClientRect();
     mouseX = e.offsetX-rect.left;
     mouseY = e.offsetY-rect.top;

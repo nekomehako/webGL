@@ -12,30 +12,68 @@
             }
         </script>
         <script id="fs" type="fragment-shader">#version 300 es
+            #define SWAPf(x0, x){float tmp=x0;x0=x;x=tmp;}
+            #define SWAPv2(x0, x){vec2 tmp=x0;x0=x;x=tmp;}
             precision highp float;
             in vec2 v_uv;
             layout (location = 0) out vec4 fragColor;
             layout (location = 1) out vec2 o_velocity;
             layout (location = 2) out float o_dencity;
             uniform vec2 resolution;
+            uniform vec2 omouse;
             uniform vec2 mouse;
-            uniform vec2 mousePress;
+            uniform float mousePress;
             uniform sampler2D backbuffer;
             uniform sampler2D u_velocity;
             uniform sampler2D u_dencity;
 
+            float diff = 0.;
+            float visc = 0.;
+            float force = 5.;
+            float source = 100.;
+
+            vec2 tmp_velocity;
+            vec2 velocity;
+            float tmp_dencity;
+            float dencity;
             void main() {
                 vec2 uv = vec2(v_uv.x * resolution.x,v_uv.y * resolution.y)/min(resolution.x,resolution.y);
-                vec2 velocity = texture(u_velocity, v_uv).xy;
-                float dencity= texture(u_dencity, v_uv).x;
+                velocity = texture(u_velocity, v_uv).xy;
+                dencity= texture(u_dencity, v_uv).x;
+                
+                //demo.c
+                //get_from_UI()
+                tmp_velocity = (mouse-omouse)*mousePress;
+                tmp_dencity  = source*mousePress;
+                //vel_step
+                    //add_sorce
+                velocity += dt*tmp_velocity;
+                tmp_velocity = velocity;
+                    //diffuse
                 
                 float gray = length(uv);
                 fragColor = vec4(mouse,0., 1.);
             }
-
-            void add_sorce(){
-
+            void diffuse_v2(){
+                float a = dt*diff*resolution.x*resolution.y;
+                lin_solve(1.+4.*a);
             }
+            void lin_solve(float c){
+                float shiftX = 1./resolution.x;
+                float shiftY = 1./resolution.y
+                velocity = (pre_velocity+texture(u_velocity,uv+vec2(shiftX,  0.).xy)
+                                        +texture(u_velocity,uv+vec2(-shiftX, 0.).xy)
+                                        +texture(u_velocity,uv+vec2(0.,  shiftY).xy)
+                                        +texture(u_velocity,uv+vec2(0., -shiftY).xy))/c;
+                set_bnd(velocity.x, uv.x);
+                set_bnd(velocity.y, uv.y);
+            }
+            void set_bnt(float x, float pos){
+                //posが1以上だったらxを反転
+                x = x - x *2*step(1., pos) - x *2*step(pos, 0.);
+            }                     
+            }
+            //demo.c
         </script>
         <style type="text/css">
             body{
