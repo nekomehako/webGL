@@ -29,16 +29,20 @@ window.onload = function(){
     //フレームバッファの作成
     const framebuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer)
+    //一つ前のレンダリング結果を保存するテクスチャの作成
+    const backTexture = createTexture(gl, CANVAS_SIZE_X, CANVAS_SIZE_Y, gl.RG32F, gl.RG, gl.FLOAT)
+    gl.bindTexture(gl.TEXTURE_2D, backTexture);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, backTexture, 0);
     //速度を保存するテクスチャの作成
     const velocityTexture = createTexture(gl, CANVAS_SIZE_X, CANVAS_SIZE_Y, gl.RG32F, gl.RG, gl.FLOAT)
     gl.bindTexture(gl.TEXTURE_2D, velocityTexture);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, velocityTexture, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, velocityTexture, 0);
     //圧力を保存するテクスチャの作成
     const dencityTexture = createTexture(gl, CANVAS_SIZE_X, CANVAS_SIZE_Y, gl.R32F, gl.RED, gl.FLOAT)
     gl.bindTexture(gl.TEXTURE_2D, dencityTexture);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, dencityTexture, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT2, gl.TEXTURE_2D, dencityTexture, 0);
 
-    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1, gl.COLOR_ATTACHMENT2]);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
@@ -76,15 +80,17 @@ window.onload = function(){
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clearDepth(1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        //uniform vec2 resolution
+        gl.uniform2f(gl.getUniformLocation(prg, 'resolution'), CANVAS_SIZE_X, CANVAS_SIZE_Y);
+        //uniform vec2 mouse
+        gl.uniform2f(gl.getUniformLocation(prg, 'mouse'), mouseX/CANVAS_SIZE_X, mouseY/CANVAS_SIZE_Y);
+        //uniform sampler2D backbuffer
+        setUniformTexture(gl, gl.getUniformLocation(prg, 'backbuffer'), dencityTexture);
         //uniform sampler2D u_velocity 
         setUniformTexture(gl, gl.getUniformLocation(prg, 'u_velocity'), velocityTexture);
         //uniform sampler2D u_dencity
         setUniformTexture(gl, gl.getUniformLocation(prg, 'u_dencity'), dencityTexture);
-        //uniform vec2 mouse
-        gl.uniform2f(gl.getUniformLocation(prg, 'mouse'), mouseX/CANVAS_SIZE_X, mouseY/CANVAS_SIZE_Y);
-        //uniform vec2 resolution
-        gl.uniform2f(gl.getUniformLocation(prg, 'resolution'), CANVAS_SIZE_X, CANVAS_SIZE_Y);
-        //頂点の描画
+        //頂点の描画 gpuの起動
         gl.drawElements(gl.TRIANGLES, indices.length , gl.UNSIGNED_SHORT, 0);
         gl.flush();
         //再帰する
