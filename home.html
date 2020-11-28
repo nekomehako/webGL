@@ -19,7 +19,8 @@
             layout (location = 2) out float o_dencity;
             uniform vec2 resolution;
             uniform vec2 mouse;
-            uniform sampler2D backbuffer
+            uniform vec2 mousePress;
+            uniform sampler2D backbuffer;
             uniform sampler2D u_velocity;
             uniform sampler2D u_dencity;
 
@@ -27,9 +28,13 @@
                 vec2 uv = vec2(v_uv.x * resolution.x,v_uv.y * resolution.y)/min(resolution.x,resolution.y);
                 vec2 velocity = texture(u_velocity, v_uv).xy;
                 float dencity= texture(u_dencity, v_uv).x;
-
+                
                 float gray = length(uv);
                 fragColor = vec4(mouse,0., 1.);
+            }
+
+            void add_sorce(){
+
             }
         </script>
         <style type="text/css">

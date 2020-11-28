@@ -2,7 +2,7 @@
 const CANVAS_SIZE_X = window.innerWidth;
 const CANVAS_SIZE_Y = window.innerHeight;
 //マウス座標
-let mouseX = 0,mouseY = 0;
+let mouseX = 0,mouseY = 0; mousePress = 0;
 let time = 0;
 let fps = 1000 /30
 
@@ -14,6 +14,8 @@ window.onload = function(){
     c.height = CANVAS_SIZE_Y;
     //マウスがキャンバス上を動いているときマウス座標の取得
     c.addEventListener('mousemove', mouseMove, true);
+    c.addEventListener('mousedown', mouseDown, true);
+    c.addEventListener('mouseup', mouseUp, true);
 
     // webgl2コンテキストを取得
     const gl = c.getContext('webgl2')
@@ -80,15 +82,17 @@ window.onload = function(){
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clearDepth(1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        //uniform vec2 resolution
+        //uniform vec2 resolution;
         gl.uniform2f(gl.getUniformLocation(prg, 'resolution'), CANVAS_SIZE_X, CANVAS_SIZE_Y);
-        //uniform vec2 mouse
+        //uniform vec2 mouse;
         gl.uniform2f(gl.getUniformLocation(prg, 'mouse'), mouseX/CANVAS_SIZE_X, mouseY/CANVAS_SIZE_Y);
-        //uniform sampler2D backbuffer
+        //uniform vec2 mousePress;
+        gl.uniform1f(gl.getUniformLocation(prg, 'mousePress'), mousePress);
+        //uniform sampler2D backbuffer;
         setUniformTexture(gl, gl.getUniformLocation(prg, 'backbuffer'), dencityTexture);
-        //uniform sampler2D u_velocity 
+        //uniform sampler2D u_velocity ;
         setUniformTexture(gl, gl.getUniformLocation(prg, 'u_velocity'), velocityTexture);
-        //uniform sampler2D u_dencity
+        //uniform sampler2D u_dencity;
         setUniformTexture(gl, gl.getUniformLocation(prg, 'u_dencity'), dencityTexture);
         //頂点の描画 gpuの起動
         gl.drawElements(gl.TRIANGLES, indices.length , gl.UNSIGNED_SHORT, 0);
@@ -102,6 +106,15 @@ function mouseMove(e){
     const rect = e.target.getBoundingClientRect();
     mouseX = e.offsetX-rect.left;
     mouseY = e.offsetY-rect.top;
+}
+
+//マウスがクリックされたときの関数
+function mouseDown(e){
+    mousePress = 1;
+}
+
+function mouseUp(e){
+    mousePress = 0;
 }
 //シェーダーのコンパイル関数
 function create_shader(gl, id){
