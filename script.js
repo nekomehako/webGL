@@ -25,26 +25,13 @@ window.onload = function(){
     const f_shader = create_shader(gl,"fs");
     
     // プログラムオブジェクトの生成とリンク
-    const prg = create_program(gl,v_shader, f_shader);
+    const prg = create_program(gl ,v_shader, f_shader);
 
     //テクスチャ
     //フレームバッファの作成
     const framebuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer)
-    //一つ前のレンダリング結果を保存するテクスチャの作成
-    const backTexture = createTexture(gl, CANVAS_SIZE_X, CANVAS_SIZE_Y, gl.RG32F, gl.RG, gl.FLOAT)
-    gl.bindTexture(gl.TEXTURE_2D, backTexture);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, backTexture, 0);
-    //速度を保存するテクスチャの作成
-    const velocityTexture = createTexture(gl, CANVAS_SIZE_X, CANVAS_SIZE_Y, gl.RG32F, gl.RG, gl.FLOAT)
-    gl.bindTexture(gl.TEXTURE_2D, velocityTexture);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, velocityTexture, 0);
-    //圧力を保存するテクスチャの作成
-    const dencityTexture = createTexture(gl, CANVAS_SIZE_X, CANVAS_SIZE_Y, gl.R32F, gl.RED, gl.FLOAT)
-    gl.bindTexture(gl.TEXTURE_2D, dencityTexture);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT2, gl.TEXTURE_2D, dencityTexture, 0);
-
-    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1, gl.COLOR_ATTACHMENT2]);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
@@ -90,12 +77,6 @@ window.onload = function(){
         gl.uniform2f(gl.getUniformLocation(prg, 'mouse'), mouseX/CANVAS_SIZE_X, mouseY/CANVAS_SIZE_Y);
         //uniform vec2 mousePress;
         gl.uniform1f(gl.getUniformLocation(prg, 'mousePress'), mousePress);
-        //uniform sampler2D backbuffer;
-        setUniformTexture(gl, gl.getUniformLocation(prg, 'backbuffer'), dencityTexture);
-        //uniform sampler2D u_velocity ;
-        setUniformTexture(gl, gl.getUniformLocation(prg, 'u_velocity'), velocityTexture);
-        //uniform sampler2D u_dencity;
-        setUniformTexture(gl, gl.getUniformLocation(prg, 'u_dencity'), dencityTexture);
         //頂点の描画 gpuの起動
         gl.drawElements(gl.TRIANGLES, indices.length , gl.UNSIGNED_SHORT, 0);
         gl.flush();
