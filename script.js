@@ -40,28 +40,38 @@ window.onload = function(){
     const VERTEX_SIZE = 3
 
     const vertexBuffer = gl.createBuffer();
-    
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    const indexBuffer = gl.createBuffer();
-
-    const vAttribLocation = gl.getAttribLocation(prg, 'vertexPosition');
-    gl.enableVertexAttribArray(vAttribLocation);
-    gl.vertexAttribPointer(vAttribLocation, VERTEX_SIZE, gl.FLOAT, false, 0, 0);
     const vertices = new Float32Array([
         -1.0, 1.0,  0.0,      // xyz
         -1.0, -1.0, 0.0,
         1.0,  1.0,  0.0,
-        1.0,  -1.0, 0.0,
+        1.0,  -1.0, 0.0
     ]);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    const vAttribLocation = gl.getAttribLocation(prg, 'vPos');
+    gl.enableVertexAttribArray(vAttribLocation);
+    gl.vertexAttribPointer(vAttribLocation, VERTEX_SIZE, gl.FLOAT, false, 0, 0);
+
+    const indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     const indices = new Uint16Array([
         0, 1, 2,
         1, 3, 2
     ]);
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+    var texCoordBuffer = gl.createBuffer();
+    const texCoord = new Float32Array([
+        0.0, 0.0,
+        0.0, 1.0,
+        1.0, 0.0,
+        1.0, 1.0
+    ]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, texCoord, gl.STATIC_DRAW);
+    var vTexCoordLocation = gl.getAttribLocation(prg, "vTexCoord");
+    gl.enableVertexAttribArray(vTexCoordLocation);
+    gl.vertexAttribPointer(vTexCoordLocation, 2, gl.FLOAT, false, 0, 0);
 
     //レンダリング
     (function(){
