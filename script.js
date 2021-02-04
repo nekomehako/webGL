@@ -72,7 +72,14 @@ window.onload = function(){
     var vTexCoordLocation = gl.getAttribLocation(prg, "vTexCoord");
     gl.enableVertexAttribArray(vTexCoordLocation);
     gl.vertexAttribPointer(vTexCoordLocation, 2, gl.FLOAT, false, 0, 0);
-
+    const unifromlocation ={
+        resolution : gl.getUniformLocation(prg, 'resolution'),
+        omouse     : gl.getUniformLocation(prg, 'omouse'),
+        mouse      : gl.getUniformLocation(prg, 'mouse'),
+        mousePress : gl.getUniformLocation(prg, 'mousePress'),
+        time       : gl.getUniformLocation(prg, 'time'),
+        tex        : gl.getUniformLocation(prg, 'tex'),
+    };
     //レンダリング
     (function(){
         //色をリセット
@@ -80,17 +87,17 @@ window.onload = function(){
         gl.clearDepth(1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         //uniform vec2 resolution;
-        gl.uniform2f(gl.getUniformLocation(prg, 'resolution'), c.width, c.height);
+        gl.uniform2f(unifromlocation['resolution'], c.width, c.height);
         //uniform vec2 omouse;
-        gl.uniform2f(gl.getUniformLocation(prg, 'omouse'), omouseX/c.width, omouseY/c.height);
+        gl.uniform2f(unifromlocation['omouse'], omouseX/c.width, omouseY/c.height);
         //uniform vec2 mouse;
-        gl.uniform2f(gl.getUniformLocation(prg, 'mouse'), mouseX/c.width, mouseY/c.height);
+        gl.uniform2f(unifromlocation['mouse'], mouseX/c.width, mouseY/c.height);
         //uniform float mousePress;
-        gl.uniform1f(gl.getUniformLocation(prg, 'mousePress'), mousePress);
+        gl.uniform1f(unifromlocation['mousePress'], mousePress);
         //uniform float mousePress;
-        gl.uniform1f(gl.getUniformLocation(prg, 'time'), time);
+        gl.uniform1f(unifromlocation['time'], time);
         //uniform sampler2D previous;
-        setUniformTexture(gl.getUniformLocation(prg, 'previous'), 0, texture);
+        setUniformTexture(unifromlocation['tex'], 0, texture);
 
         //頂点の描画 gpuの起動
         gl.drawElements(gl.TRIANGLES, indices.length , gl.UNSIGNED_SHORT, 0);

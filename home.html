@@ -25,10 +25,10 @@
             uniform vec2 omouse;
             uniform vec2 mouse;
             uniform float mousePress;
-            uniform sampler2D previous;
+            uniform sampler2D tex;
             void main() {
                 vec2 uv = vec2(pos.x * resolution.x,pos.y * resolution.y)/min(resolution.x,resolution.y);
-                vec4 col = texture(previous, texCoord);
+                vec4 col = texture(tex, texCoord);
                 fragColor = col;
             }
         </script>
