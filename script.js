@@ -13,9 +13,9 @@ window.onload = function(){
     c.width = CANVAS_SIZE_X;
     c.height = CANVAS_SIZE_Y;
     //マウスがキャンバス上を動いているときマウス座標の取得
-    c.addEventListener('mousemove', mouseMove, true);
-    c.addEventListener('mousedown', mouseDown, true);
-    c.addEventListener('mouseup', mouseUp, true);
+    c.addEventListener('mousemove', {width: c.width, height: c.height, handleEvent: mouseMove}, true);
+    c.addEventListener('mousedown', function(){mousePress = 1}, true);
+    c.addEventListener('mouseup', function(){mousePress = 0}, true);
 
     // webgl2コンテキストを取得
     gl = c.getContext('webgl2')
@@ -30,7 +30,7 @@ window.onload = function(){
     // テクスチャを生成
     let texture;
     // イメージオブジェクトの生成
-    let img = new Image();
+    const img = new Image();
     // データのオンロードをトリガーにする
     img.onload = function(){texture = create_texture(img);};
     // イメージオブジェクトのソースを指定
@@ -60,7 +60,7 @@ window.onload = function(){
     ]);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 
-    var texCoordBuffer = gl.createBuffer();
+    const texCoordBuffer = gl.createBuffer();
     const texCoord = new Float32Array([
         0.0, 0.0,
         0.0, 1.0,
@@ -69,7 +69,7 @@ window.onload = function(){
     ]);
     gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, texCoord, gl.STATIC_DRAW);
-    var vTexCoordLocation = gl.getAttribLocation(prg, "vTexCoord");
+    const vTexCoordLocation = gl.getAttribLocation(prg, "vTexCoord");
     gl.enableVertexAttribArray(vTexCoordLocation);
     gl.vertexAttribPointer(vTexCoordLocation, 2, gl.FLOAT, false, 0, 0);
     const unifromlocation ={
@@ -89,9 +89,9 @@ window.onload = function(){
         //uniform vec2 resolution;
         gl.uniform2f(unifromlocation['resolution'], c.width, c.height);
         //uniform vec2 omouse;
-        gl.uniform2f(unifromlocation['omouse'], omouseX/c.width, omouseY/c.height);
+        gl.uniform2f(unifromlocation['omouse'], omouseX, omouseY);
         //uniform vec2 mouse;
-        gl.uniform2f(unifromlocation['mouse'], mouseX/c.width, mouseY/c.height);
+        gl.uniform2f(unifromlocation['mouse'], mouseX, mouseY);
         //uniform float mousePress;
         gl.uniform1f(unifromlocation['mousePress'], mousePress);
         //uniform float mousePress;
@@ -110,17 +110,8 @@ window.onload = function(){
 //マウス座標取得関数
 function mouseMove(e){
     omouseX = mouseX; omouseY = mouseY;
-    mouseX = e.offsetX;
-    mouseY = e.offsetY;
-}
-
-//マウスがクリックされたときの関数
-function mouseDown(e){
-    mousePress = 1;
-}
-
-function mouseUp(e){
-    mousePress = 0;
+    mouseX = (e.offsetX/this.width-0.5)*2;
+    mouseY = -(e.offsetY/this.height-0.5)*2;
 }
 //シェーダーのコンパイル関数
 function create_shader(id){
@@ -144,7 +135,6 @@ function create_shader(id){
         default :
             return;
     }
-    
     // 生成されたシェーダにソースを割り当てる
     gl.shaderSource(shader, scriptElement.text);
     // シェーダをコンパイル

@@ -26,10 +26,16 @@
             uniform vec2 mouse;
             uniform float mousePress;
             uniform sampler2D tex;
+
+            vec2 norCoord(vec2 coord, vec2 resolution){
+                return vec2(coord.x * resolution.x,coord.y * resolution.y)/min(resolution.x,resolution.y);
+            }
             void main() {
-                vec2 uv = vec2(pos.x * resolution.x,pos.y * resolution.y)/min(resolution.x,resolution.y);
-                vec4 col = texture(tex, texCoord);
-                fragColor = col;
+                vec2 uv = norCoord(pos, resolution);
+                vec2 tex_nor = norCoord(texCoord, resolution);
+                vec2 mouse_nor = norCoord(mouse, resolution);
+                vec4 col = vec4(vec3(step(0.5, length(uv - mouse_nor))), -mousePress);
+                fragColor = col + texture(tex, tex_nor);
             }
         </script>
         <style type="text/css">
