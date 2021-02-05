@@ -4,7 +4,7 @@ const CANVAS_SIZE_Y = window.innerHeight;
 //マウス座標
 let mouseX = 0,mouseY = 0; omouseX = 0, omouseY = 0, mousePress = 0;
 let time = 0;
-let fps = 1000 /30
+let fps = 1000 /30;
 
 window.onload = function(){
     // canvasエレメントを取得
@@ -25,32 +25,24 @@ window.onload = function(){
     const f_shader = create_shader("fs");
     
     // プログラムオブジェクトの生成とリンク
-    const prg = create_program(v_shader, f_shader);
+    const backprg = create_program(v_shader, f_shader);
     
-    // テクスチャを生成
-    let texture;
-    // イメージオブジェクトの生成
-    const img = new Image();
-    // データのオンロードをトリガーにする
-    img.onload = function(){texture = create_texture(img);};
-    // イメージオブジェクトのソースを指定
-    img.src = "texture.png";
+    const backFrameBuffer = create_fbo(c.width, c.height);
 
-    // 頂点情報の設定
-    const VERTEX_SIZE = 3
+    const passf_shader = create_shader("fsp");
+    const passprg = create_program(v_shader, passf_shader);
+    
+    const saveFrameBuffer = create_fbo(c.width, c.height);
 
-    const vertexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     const vertices = new Float32Array([
         -1.0, 1.0,  0.0,      // xyz
         -1.0, -1.0, 0.0,
         1.0,  1.0,  0.0,
         1.0,  -1.0, 0.0
     ]);
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-    const vAttribLocation = gl.getAttribLocation(prg, 'vPos');
-    gl.enableVertexAttribArray(vAttribLocation);
-    gl.vertexAttribPointer(vAttribLocation, VERTEX_SIZE, gl.FLOAT, false, 0, 0);
+    const vertexBuffer = create_vbo(vertices);
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+    setAttribuLocation(backprg, 'vPos', 3)
 
     const indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -69,38 +61,58 @@ window.onload = function(){
     ]);
     gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, texCoord, gl.STATIC_DRAW);
-    const vTexCoordLocation = gl.getAttribLocation(prg, "vTexCoord");
-    gl.enableVertexAttribArray(vTexCoordLocation);
-    gl.vertexAttribPointer(vTexCoordLocation, 2, gl.FLOAT, false, 0, 0);
-    const unifromlocation ={
-        resolution : gl.getUniformLocation(prg, 'resolution'),
-        omouse     : gl.getUniformLocation(prg, 'omouse'),
-        mouse      : gl.getUniformLocation(prg, 'mouse'),
-        mousePress : gl.getUniformLocation(prg, 'mousePress'),
-        time       : gl.getUniformLocation(prg, 'time'),
-        tex        : gl.getUniformLocation(prg, 'tex'),
+    setAttribuLocation(backprg, 'vTexCoord', 2)
+    setAttribuLocation(passprg, 'vTexCoord', 2)
+
+    const backprgUL = {
+        resolution : gl.getUniformLocation(backprg, 'resolution'),
+        omouse     : gl.getUniformLocation(backprg, 'omouse'),
+        mouse      : gl.getUniformLocation(backprg, 'mouse'),
+        mousePress : gl.getUniformLocation(backprg, 'mousePress'),
+        time       : gl.getUniformLocation(backprg, 'time'),
+        tex        : gl.getUniformLocation(backprg, 'tex'),
     };
+    const passprgUL = {
+        tex        : gl.getUniformLocation(passprg, 'tex'),
+    };
+
     //レンダリング
     (function(){
+        gl.bindFramebuffer(gl.FRAMEBUFFER, backFrameBuffer.f);
+        gl.useProgram(backprg);
         //色をリセット
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clearDepth(1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         //uniform vec2 resolution;
-        gl.uniform2f(unifromlocation['resolution'], c.width, c.height);
+        gl.uniform2f(backprgUL['resolution'], c.width, c.height);
         //uniform vec2 omouse;
-        gl.uniform2f(unifromlocation['omouse'], omouseX, omouseY);
+        gl.uniform2f(backprgUL['omouse'], omouseX, omouseY);
         //uniform vec2 mouse;
-        gl.uniform2f(unifromlocation['mouse'], mouseX, mouseY);
+        gl.uniform2f(backprgUL['mouse'], mouseX, mouseY);
         //uniform float mousePress;
-        gl.uniform1f(unifromlocation['mousePress'], mousePress);
-        //uniform float mousePress;
-        gl.uniform1f(unifromlocation['time'], time);
+        gl.uniform1f(backprgUL['mousePress'], mousePress);
+        //uniform float time;
+        gl.uniform1f(backprgUL['time'], time);
         //uniform sampler2D previous;
-        setUniformTexture(unifromlocation['tex'], 0, texture);
-
+        setUniformTexture(backprgUL['tex'], 0, saveFrameBuffer.t);
         //頂点の描画 gpuの起動
         gl.drawElements(gl.TRIANGLES, indices.length , gl.UNSIGNED_SHORT, 0);
+        
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.useProgram(passprg);
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clearDepth(1.0);
+        setUniformTexture(passprgUL['tex'], 0, backFrameBuffer.t);
+        gl.drawElements(gl.TRIANGLES, indices.length , gl.UNSIGNED_SHORT, 0);
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, saveFrameBuffer.f);
+        gl.useProgram(passprg);
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clearDepth(1.0);
+        setUniformTexture(passprgUL['tex'], 0, backFrameBuffer.t);
+        gl.drawElements(gl.TRIANGLES, indices.length , gl.UNSIGNED_SHORT, 0);
+
         gl.flush();
         time++;
         //再帰する
@@ -160,10 +172,6 @@ function create_program(vs, fs){
     
     // シェーダのリンクが正しく行なわれたかチェック
     if(gl.getProgramParameter(program, gl.LINK_STATUS)){
-    
-        // 成功していたらプログラムオブジェクトを有効にする
-        gl.useProgram(program);
-        
         // プログラムオブジェクトを返して終了
         return program;
     }else{
@@ -190,4 +198,39 @@ function setUniformTexture(location, index, texture) {
     gl.activeTexture(gl.TEXTURE0 + index);
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.uniform1i(location, index);
+}
+
+function create_screenTexture(width, height){
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    return texture;
+}
+function create_fbo(width, height){
+    const frameBuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+    const frameTexture = create_screenTexture(width, height);
+    gl.bindTexture(gl.TEXTURE_2D, frameTexture);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, frameTexture, 0);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return {f: frameBuffer, t:frameTexture}
+}
+
+function create_vbo(data){
+    const vbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    return vbo;
+}
+function setAttribuLocation(prg, name, size){
+    const vAttribLocation = gl.getAttribLocation(prg, name);
+    gl.enableVertexAttribArray(vAttribLocation);
+    gl.vertexAttribPointer(vAttribLocation, size, gl.FLOAT, false, 0, 0);
 }
