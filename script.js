@@ -3,7 +3,6 @@ const CANVAS_SIZE_X = window.innerWidth;
 const CANVAS_SIZE_Y = window.innerHeight;
 //マウス座標
 let mouseX = 0,mouseY = 0; omouseX = 0, omouseY = 0, mousePress = 0;
-let time = 0;
 let fps = 1000 /30;
 
 window.onload = function(){
@@ -61,18 +60,6 @@ window.onload = function(){
     ]);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 
-    const texCoordBuffer = gl.createBuffer();
-    const texCoord = new Float32Array([
-        0.0, 0.0,
-        0.0, 1.0,
-        1.0, 0.0,
-        1.0, 1.0
-    ]);
-    gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, texCoord, gl.STATIC_DRAW);
-    setAttribuLocation(backprg, 'vTexCoord', 2);
-    setAttribuLocation(passprg, 'vTexCoord', 2);
-
     const backprgUL = {
         resolution : gl.getUniformLocation(backprg, 'resolution'),
         omouse     : gl.getUniformLocation(backprg, 'omouse'),
@@ -85,9 +72,12 @@ window.onload = function(){
     const passprgUL = {
         previous        : gl.getUniformLocation(passprg, 'previous'),
     };
-
+    let start_time = Date.now(); 
+    let now_time = 0;
     //レンダリング
     (function(){
+        now_time = (Date.now() - start_time)/1000;
+
         gl.bindFramebuffer(gl.FRAMEBUFFER, backFrameBuffer.f);
         gl.useProgram(backprg);
         //色をリセット
@@ -101,7 +91,7 @@ window.onload = function(){
         //uniform float mousePress;
         gl.uniform1f(backprgUL['mousePress'], mousePress);
         //uniform float time;
-        gl.uniform1f(backprgUL['time'], time);
+        gl.uniform1f(backprgUL['time'], now_time);
         //uniform sampler2D tex;
         setUniformTexture(backprgUL['tex'], 0, texture);
         //uniform sampler2D previous;
@@ -124,7 +114,6 @@ window.onload = function(){
         gl.drawElements(gl.TRIANGLES, indices.length , gl.UNSIGNED_SHORT, 0);
 
         gl.flush();
-        time++;
         //再帰する
         setTimeout(arguments.callee, fps);
     })();
@@ -132,8 +121,8 @@ window.onload = function(){
 //マウス座標取得関数
 function mouseMove(e){
     omouseX = mouseX; omouseY = mouseY;
-    mouseX = (e.offsetX/this.width-0.5)*2;
-    mouseY = -(e.offsetY/this.height-0.5)*2;
+    mouseX = e.offsetX/this.width;
+    mouseY = -e.offsetY/this.height + 1;
 }
 //シェーダーのコンパイル関数
 function create_shader(id){
