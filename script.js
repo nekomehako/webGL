@@ -75,6 +75,7 @@ window.onload = function(){
     let start_time = Date.now(); 
     let now_time = 0;
     //レンダリング
+    const guiParam = addGUI();
     (function(){
         now_time = (Date.now() - start_time)/1000;
 
