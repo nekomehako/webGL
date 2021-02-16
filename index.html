@@ -39,8 +39,9 @@
                 vec2 tex_nor = norCoord(texCoord, resolution);
                 vec2 mouse_nor = norCoord(mouse, resolution);
                 vec3 mcol = vec3(step(0.2, length(uv - mouse_nor)));
-                vec3 col = (mcol + texture(previous, vec2(texCoord.x, 1.-texCoord.y)).xyz*2. + texture(tex, vec2(tex_nor.x+time/10., tex_nor.y)).xyz)/4.0;
-                fragColor = vec4(col, 1.-mousePress);
+                vec3 col = (mcol + texture(previous, fragCoord).xyz*2. + texture(tex, vec2(tex_nor.x, tex_nor.y)).xyz)/4.0;
+                fragColor.xyz = col;
+                fragColor.w = 1.;
             }
         </script>
         <script id="fssave" type="fragment-shader">#version 300 es
@@ -58,9 +59,23 @@
             in vec2 fragCoord;
             layout (location = 0) out vec4 fragColor;
             uniform sampler2D previous;
+            uniform float binarization;
+            uniform vec2 lightPos;
+            uniform vec2 lightTarget;
+            uniform vec2 resolution;
+
+            vec4 chromaticAberration(sampler2D tex, vec2 fragCoord, float dist){
+                vec2 uv = (fragCoord * 2.) -1.;
+                float R = texture(tex, (uv * dist + 1.) * 0.5).x;
+                float G = texture(tex, (uv / dist + 1.) * 0.5).y;
+                vec2 BA = texture(tex, fragCoord).zw;
+                return vec4(R, G, BA);
+            }
 
             void main() {
-                fragColor = texture(previous, vec2(fragCoord.x, fragCoord.y));
+                vec3 col = chromaticAberration(previous, fragCoord, 1.01).xyz;
+                fragColor.xyz = col;
+                fragColor.w = 1.;
             }
         </script>
         <style type="text/css">
