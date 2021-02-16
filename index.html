@@ -43,6 +43,16 @@
                 fragColor = vec4(col, 1.-mousePress);
             }
         </script>
+        <script id="fssave" type="fragment-shader">#version 300 es
+            precision highp float;
+            in vec2 fragCoord;
+            layout (location = 0) out vec4 fragColor;
+            uniform sampler2D previous;
+
+            void main() {
+                fragColor = texture(previous, vec2(fragCoord.x, fragCoord.y));
+            }
+        </script>
         <script id="fsp" type="fragment-shader">#version 300 es
             precision highp float;
             in vec2 fragCoord;

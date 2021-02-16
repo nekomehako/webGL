@@ -28,6 +28,9 @@ window.onload = function(){
     // メインのフレームバッファーオブジェクトの作成
     const backFrameBuffer = create_fbo(c.width, c.height);
 
+    const savef_shader = create_shader("fssave");
+    const saveprg = create_program(v_shader, savef_shader);
+
     const passf_shader = create_shader("fsp");
     const passprg = create_program(v_shader, passf_shader);
     // previous texture保存用フレームバッファーオブジェクトの作成
@@ -69,8 +72,11 @@ window.onload = function(){
         tex        : gl.getUniformLocation(backprg, 'tex'),
         previous        : gl.getUniformLocation(backprg, 'previous'),
     };
+    const saveprgUL = {
+        previous    : gl.getUniformLocation(saveprg, 'previous'),
+    };
     const passprgUL = {
-        previous        : gl.getUniformLocation(passprg, 'previous'),
+        previous   : gl.getUniformLocation(passprg, 'previous'),
     };
     let start_time = Date.now(); 
     let now_time = 0;
@@ -83,6 +89,7 @@ window.onload = function(){
         gl.useProgram(backprg);
         //色をリセット
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
         //uniform vec2 resolution;
         gl.uniform2f(backprgUL['resolution'], c.width, c.height);
         //uniform vec2 omouse;
@@ -109,9 +116,10 @@ window.onload = function(){
         gl.drawElements(gl.TRIANGLES, indices.length , gl.UNSIGNED_SHORT, 0);
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, saveFrameBuffer.f);
-        gl.useProgram(passprg);
+        gl.useProgram(saveprg);
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        setUniformTexture(passprgUL['previous'], 0, backFrameBuffer.t);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        setUniformTexture(saveprgUL['previous'], 0, backFrameBuffer.t);
         gl.drawElements(gl.TRIANGLES, indices.length , gl.UNSIGNED_SHORT, 0);
 
         gl.flush();
@@ -156,7 +164,7 @@ function create_shader(id){
         return shader;
     }else{
         // エラーログをアラートする
-        alert(gl.getShaderInfoLog(shader));
+        alert("id:"+ id +"\n" + gl.getShaderInfoLog(shader));
     }
 }
 
