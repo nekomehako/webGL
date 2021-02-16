@@ -64,16 +64,30 @@
             uniform vec2 lightTarget;
             uniform vec2 resolution;
 
-            vec4 chromaticAberration(sampler2D tex, vec2 fragCoord, float dist){
-                vec2 uv = (fragCoord * 2.) -1.;
-                float R = texture(tex, (uv * dist + 1.) * 0.5).x;
-                float G = texture(tex, (uv / dist + 1.) * 0.5).y;
-                vec2 BA = texture(tex, fragCoord).zw;
-                return vec4(R, G, BA);
+            float luminance(vec3 RGB){
+                return dot(RGB, vec3(0.299, 0.587, 0.114));
+            }
+            // Interleaved gradient noise
+            float ilg_noise(vec2 p){
+                return fract(52.9829189 * fract(dot(vec2(0.06711056, 0.00583715), p)));
             }
 
+            vec3 radialBlur(sampler2D tex, vec2 fragCoord, vec2 lightDir, float distance){
+                vec2 uv = ((fragCoord) * 2.) -1.;
+                float resolution_nrml = min(resolution.x, resolution.y);
+                vec3 col = vec3(0.);
+                for(float d = 1.; d < distance; d += 0.05){
+                    vec2 coord = (uv / d - lightDir*(1.-1./d) + 1.) * 0.5;
+                    vec3 temp = texture(tex, coord).xyz;
+                    float lum = luminance(temp);
+                    col += step(ilg_noise(coord*resolution_nrml)*0.1 + 0.9, lum) *temp;
+                }
+                col /= ceil((distance - 1.)/.05);
+                return col;
+            }
             void main() {
-                vec3 col = chromaticAberration(previous, fragCoord, 1.01).xyz;
+                vec2 lightDir = lightTarget - lightPos;
+                vec3 col = radialBlur(previous, fragCoord, lightDir, 2.);//*0.5 + texture(previous, fragCoord).xyz;;
                 fragColor.xyz = col;
                 fragColor.w = 1.;
             }

@@ -77,6 +77,10 @@ window.onload = function(){
     };
     const passprgUL = {
         previous   : gl.getUniformLocation(passprg, 'previous'),
+        resolution : gl.getUniformLocation(passprg, 'resolution'),
+        binarization: gl.getUniformLocation(passprg, 'binarization'),
+        lightPos   : gl.getUniformLocation(passprg, 'lightPos'),
+        lightTarget: gl.getUniformLocation(passprg, 'lightTarget'),
     };
     let start_time = Date.now(); 
     let now_time = 0;
@@ -113,6 +117,10 @@ window.onload = function(){
         gl.clearDepth(1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         setUniformTexture(passprgUL['previous'], 0, backFrameBuffer.t);
+        gl.uniform2f(passprgUL['resolution'], c.width, c.height);
+        gl.uniform1f(passprgUL['binarization'], guiParam.binarization);
+        gl.uniform2f(passprgUL['lightPos'], guiParam.lightPos_x, guiParam.lightPos_y);
+        gl.uniform2f(passprgUL['lightTarget'], guiParam.lightTarget_x, guiParam.lightTarget_y);
         gl.drawElements(gl.TRIANGLES, indices.length , gl.UNSIGNED_SHORT, 0);
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, saveFrameBuffer.f);
