@@ -58,9 +58,24 @@
             in vec2 fragCoord;
             layout (location = 0) out vec4 fragColor;
             uniform sampler2D previous;
+            uniform float time;
+            uniform float width;
+            float rand(float n){return fract(sin(n) * 43758.5453123);}
 
+            float glitch(float axis, float p, float h){
+                return step(p-h, axis)*step(axis, h+p);
+            }
             void main() {
-                fragColor = texture(previous, fragCoord);
+                float t = time;
+                float gy = glitch(fragCoord.y, rand(t-613.), rand(t-1245.)* 0.1)* rand(t + 253.)*width;
+                gy      += glitch(fragCoord.y, rand(t-483.), rand(t-145.)* 0.1) * rand(t + 483.)*width;
+                
+                vec3 col;
+                col.x = texture(previous, fract(fragCoord+vec2(gy*rand(t + 25.),0.))).x;
+                col.y = texture(previous, fract(fragCoord+vec2(gy*rand(t + 65.),0.))).y;
+                col.z = texture(previous, fract(fragCoord+vec2(gy*rand(t - 24.),0.))).z;
+                fragColor.xyz = col;
+                fragColor.w = 1.;
             }
         </script>
         <style type="text/css">

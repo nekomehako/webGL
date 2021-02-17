@@ -77,6 +77,8 @@ window.onload = function(){
     };
     const passprgUL = {
         previous   : gl.getUniformLocation(passprg, 'previous'),
+        time       : gl.getUniformLocation(passprg, 'time'),
+        width       : gl.getUniformLocation(passprg, 'width'),
     };
     let start_time = Date.now(); 
     let now_time = 0;
@@ -113,6 +115,8 @@ window.onload = function(){
         gl.clearDepth(1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         setUniformTexture(passprgUL['previous'], 0, backFrameBuffer.t);
+        gl.uniform1f(passprgUL['time'], now_time);
+        gl.uniform1f(passprgUL['width'], guiParam.param2);
         gl.drawElements(gl.TRIANGLES, indices.length , gl.UNSIGNED_SHORT, 0);
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, saveFrameBuffer.f);
