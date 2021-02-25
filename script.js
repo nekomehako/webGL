@@ -15,7 +15,7 @@ window.onload = function(){
     c.addEventListener('mousemove', {width: c.width, height: c.height, handleEvent: mouseMove}, true);
     c.addEventListener('mousedown', function(){mousePress = 1}, true);
     c.addEventListener('mouseup', function(){mousePress = 0}, true);
-    c.addEventListener('wheel', function(e){wheel += e.deltaY; wheel = Math.min(Math.max(wheel, -15), 0.)}, true);
+    c.addEventListener('wheel', function(e){wheel -= e.deltaY; wheel = Math.min(Math.max(wheel, 0), 15)}, true);
 
     // webgl2コンテキストを取得
     gl = c.getContext('webgl2');
