@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!D0CTYPE html>
 <html>
     <head>
         <meta charset="utf-8"/>
@@ -18,6 +18,8 @@
             }
         </script>
         <script id="fs" type="fragment-shader">#version 300 es
+            #define MAX_MARCH 64
+            #define MAX_DIST 100.
             precision highp float;
             in vec2 fragCoord;
             in vec2 texCoord;
@@ -29,18 +31,69 @@
             uniform float time;
             uniform sampler2D previous;
             uniform sampler2D tex;
+            uniform float PI;
 
-            vec2 norCoord(vec2 coord, vec2 resolution){
+            float dist_func(vec3 p){
+                float n = 1.1;
+                p = mod(p, n*2.)-n;
+                return length(p)-0.5;
+            }
+            vec3 get_n(vec3 p){
+                float ep = 0.0001;
+                vec3 epx = vec3(ep, 0., 0.);
+                vec3 epy = vec3(0., ep, 0.);
+                vec3 epz = vec3(0., 0., ep);
+                return normalize(vec3(
+                    dist_func(p+epx)-dist_func(p-epx),
+                    dist_func(p+epy)-dist_func(p-epy),
+                    dist_func(p+epz)-dist_func(p-epz)
+                ));
+            }
+            vec2 norCoord(vec2 coord){
                 vec2 temp = coord * 2. - 1.;
-                return vec2(temp.x * resolution.x,temp.y * resolution.y)/min(resolution.x,resolution.y);
+                return temp*resolution/min(resolution.x,resolution.y);
             }
             void main() {
-                vec2 uv = norCoord(fragCoord, resolution);
-                vec2 tex_nor = norCoord(texCoord, resolution);
-                vec2 mouse_nor = norCoord(mouse, resolution);
-                vec3 mcol = vec3(step(0.2, length(uv - mouse_nor)));
-                vec3 col = (mcol + texture(previous, fragCoord).xyz*2. + texture(tex, vec2(tex_nor.x+time/10., tex_nor.y)).xyz)/4.0;
-                fragColor = vec4(col, 1.-mousePress);
+                float t = time*0.1;
+                vec2 uv = norCoord(fragCoord);
+                vec3 ro = vec3(sin(t)*3., 2., cos(t)*3.);
+
+                vec3 lightdir = vec3(1.);
+                vec3 lookat = vec3(0.);
+                float zoom = 1.;
+                
+                vec3 f = normalize(lookat-ro);
+                vec3 vertical = normalize(cross(vec3(0,1,0), f));
+                vec3 horizontal = cross(f, vertical);
+                vec3 i = ro + f*zoom + uv.x * vertical + uv.y * horizontal;
+                vec3 rdir = normalize(i -ro);
+
+                vec3 ray = ro;
+                vec3 col = vec3(0.);
+                float dist = 0., d = 0.;
+                int march;
+                for(march = 0; march < MAX_MARCH; march++){
+                    d = dist_func(ray);
+                    dist += d;
+                    ray = ro + rdir*dist;
+                    if(abs(d) < 0.001)break;
+                    if(dist>MAX_DIST) {
+                        dist = MAX_DIST;
+                        march = MAX_MARCH-1;
+                        break;
+                    }
+                }
+                if(abs(d) < 0.001){
+                    vec3 n = get_n(ray);
+                    float c = dot(lightdir, n)*0.3+0.2;
+                    col = vec3(c);
+                }
+                float fog = min(1.0, (1.0 / float(MAX_MARCH)) * float(march))*1.0;
+                vec3  fog2 = 0.01 * vec3(1, 2, 1) * dist;
+                col += vec3(0.1, 0.2, 0.1)*fog + fog2;
+
+                fragColor.xyz = col;
+                fragColor.w = 1.;
             }
         </script>
         <script id="fssave" type="fragment-shader">#version 300 es
